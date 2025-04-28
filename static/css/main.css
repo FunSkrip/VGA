@@ -1,0 +1,83 @@
+html, body {
+    height: 100%;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 80px;
+}
+
+.content {
+    flex: 1;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    min-height: calc(100vh - 160px); /* с учетом шапки и футера */
+}
+
+footer {
+    padding: 10px;
+    z-index: 1000;
+    background: #fff;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* HEADER */
+header {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1340px;
+    background: white;
+    z-index: 1030;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    will-change: transform;
+    padding: 20px;
+}
+
+.header-hidden {
+    transform: translateY(-100%) !important;
+}
+
+.header__img {
+    height: 48px;
+    width: 64px;
+}
+
+.feature-icon {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+
+:root {
+    --header-height: 80px; /* Значение по умолчанию */
+}
+
+.text-end {
+    white-space: nowrap; /* Запрет переноса кнопок */
+}
+
+#result-video {
+  max-width: 90vw;      /* не шире 90% от viewport width */
+  max-height: 70vh;     /* не выше 70% от viewport height */
+  width: auto;          /* сохраняем пропорции */
+  height: auto;
+  display: block;
+  margin: 0 auto;       /* центрируем */
+}

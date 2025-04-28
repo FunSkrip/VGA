@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static',  filename='css/main.css') }}">
+    <title>Video Segmentation Analytics (VGA)</title>
+</head>
+<body>
+    <div class="page">
+        <div class="d-flex justify-content-center">
+            <div class="container-lg">
+                <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+                    <div class="col-md-3 mb-2 mb-md-0">
+                        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+                          <img class="header__img" src="{{ url_for('static', filename='img/logo.png') }}" alt="">
+                        </a>
+                    </div>
+
+                    <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                        <li><a href="{{ url_for('index') }}" class="nav-link px-2 {% if request.endpoint == 'index' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Главная страница</a></li>
+                        <li><a href="{{ url_for('analysis') }}" class="nav-link px-2 {% if request.endpoint == 'analysis' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Детекция</a></li>
+                        <li><a href="{{ url_for('about') }}" class="nav-link px-2 {% if request.endpoint == 'about' %}link-primary fw-bold{% else %}link-secondary{% endif %}">О нас</a></li>
+                    </ul>
+
+                    <div class="col-md-3 text-end">
+                        {% if current_user.is_authenticated %}
+                            <span class="me-3">Привет, {{ current_user.username }}!</span>
+                            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Выйти</a>
+                        {% else %}
+                            <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                                <li><a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Войти</a></li>
+                                <li><a href="{{ url_for('register') }}" class="btn btn-primary">Зарегистрироваться</a></li>
+                            </ul>
+                        {% endif %}
+                    </div>
+                </header>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container">
+                {% block content %} {% endblock %}
+            </div>
+        </div>
+
+        <div class="container">
+            <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+                <div class="col-md-4 d-flex align-items-center">
+                  <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1" aria-label="Bootstrap">
+                    <svg class="bi" width="30" height="24" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+                  </a>
+                  <span class="mb-3 mb-md-0 text-body-secondary">© 2025 Video Segmentation Analytics (VGA), Inc</span>
+                </div>
+
+                <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                  <li class="ms-3"><a class="text-body-secondary" href="#" aria-label="Instagram"><svg class="bi" width="24" height="24" aria-hidden="true"><use xlink:href="#instagram"></use></svg></a></li>
+                  <li class="ms-3"><a class="text-body-secondary" href="#" aria-label="Facebook"><svg class="bi" width="24" height="24"><use xlink:href="#facebook"></use></svg></a></li>
+                </ul>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/ваш-код.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/header.js') }}"></script>
+    {% block scripts %} {% endblock %}
+</body>
+</html>

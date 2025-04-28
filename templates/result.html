@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2 class="mb-4">Результаты детекции</h2>
+
+  <!-- Статистика -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <p class="mb-1 text-muted">Людей</p>
+              <h3 class="mb-0">{{ people }}</h3>
+            </div>
+            <div class="col-6">
+              <p class="mb-1 text-muted">Машин</p>
+              <h3 class="mb-0">{{ cars }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Медиа-контент -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-0">
+          {% if url.endswith('.mp4') %}
+            <video id="result-video" class="w-100 rounded-top" controls>
+              <source src="{{ url_for('static', filename='processed/' ~ url) }}" type="video/mp4">
+              Ваш браузер не поддерживает видео.
+            </video>
+
+          {% elif url.endswith('.gif') %}
+            <img id="result-gif"
+                 src="{{ url_for('static', filename='processed/' ~ url) }}"
+                 class="img-fluid rounded-top"
+                 alt="Результат GIF">
+
+            <div class="p-3">
+              <button id="replay-btn" class="btn btn-outline-primary">
+                <i class="fas fa-redo-alt me-1"></i> Повторить GIF
+              </button>
+            </div>
+
+          {% else %}
+            <img src="{{ url_for('static', filename='processed/' ~ url) }}"
+                 class="img-fluid rounded-top"
+                 alt="Результат изображения">
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Кнопки действия -->
+      <div class="d-flex justify-content-center gap-3">
+        <a href="{{ url_for('download_file', filename=url) }}"
+           class="btn btn-primary">
+          <i class="fas fa-download me-1"></i> Скачать результат
+        </a>
+        <a href="{{ url_for('analysis') }}"
+           class="btn btn-secondary">
+          <i class="fas fa-arrow-left me-1"></i> Назад к детекции
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const replayBtn = document.getElementById('replay-btn');
+    if (!replayBtn) return;
+
+    const gif = document.getElementById('result-gif');
+    const baseUrl = '{{ url_for("static", filename="processed/" ~ url) }}';
+
+    replayBtn.addEventListener('click', () => {
+      gif.src = baseUrl + '?t=' + Date.now();
+    });
+  });
+</script>
+{% endblock %}

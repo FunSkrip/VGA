@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <!-- Заголовок страницы -->
+  <div class="row">
+    <div class="col text-center">
+      <h1 class="display-5 mb-3">О нас</h1>
+      <p class="lead text-muted">Команда Video Segmentation Analytics — мы объединяем экспертизу в компьютерном зрении и веб-разработке, чтобы дать вам простой инструмент для анализа видео и изображений.</p>
+    </div>
+  </div>
+
+  <!-- Наша миссия -->
+  <div class="row my-5">
+    <div class="col-md-6">
+      <h2>Наша миссия</h2>
+      <p>Мы стремимся сделать технологии глубокого обучения и детекции объектов с помощью YOLOv8 доступными каждому. С нашей платформой вы без труда:</p>
+      <ul class="list-unstyled ps-3">
+        <li class="mb-2"><i class="fas fa-bullseye text-primary me-2"></i>Анализируете видео и изображения локально, без сложных установок</li>
+        <li class="mb-2"><i class="fas fa-clock text-success me-2"></i>Получаете результаты в реальном времени</li>
+        <li><i class="fas fa-chart-line text-info me-2"></i>Ведёте точный подсчет и экспортируете данные для дальнейшего исследования</li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <img src="{{ url_for('static', filename='img/yolo-demo.gif') }}" alt="Миссия" class="img-fluid rounded shadow-sm">
+    </div>
+  </div>
+
+  <!-- Наша команда -->
+  <div class="row mb-5">
+    <div class="col text-center">
+      <h2>Наша команда</h2>
+      <p class="text-muted mb-4">Небольшая, но сплочённая группа разработчиков и исследователей.</p>
+    </div>
+  </div>
+  <div class="row g-4 mb-5 justify-content-center">
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="card h-100 text-center shadow-sm">
+        <img src="{{ url_for('static', filename='img/team/alice.jpg') }}" class="card-img-top rounded-circle mx-auto mt-4" style="width:120px; height:120px; object-fit:cover;" alt="Данил">
+        <div class="card-body">
+          <h5 class="card-title">Слушкин Данила</h5>
+          <p class="card-text text-muted">ML-инженер<br>YOLOv8 &amp; компьютерное зрение</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="card h-100 text-center shadow-sm">
+        <img src="{{ url_for('static', filename='img/team/bob.jpg') }}" class="card-img-top rounded-circle mx-auto mt-4" style="width:120px; height:120px; object-fit:cover;" alt="Данил">
+        <div class="card-body">
+          <h5 class="card-title">Слушкин Данила</h5>
+          <p class="card-text text-muted">Backend-разработчик<br>Flask, базы данных</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-3">
+      <div class="card h-100 text-center shadow-sm">
+        <img src="{{ url_for('static', filename='img/team/karin.jpg') }}" class="card-img-top rounded-circle mx-auto mt-4" style="width:120px; height:120px; object-fit:cover;" alt="Данил">
+        <div class="card-body">
+          <h5 class="card-title">Слушкин Данила</h5>
+          <p class="card-text text-muted">Frontend-разработчик<br>Bootstrap &amp; UX/UI</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Технологии -->
+  <div class="row my-5">
+    <div class="col text-center">
+      <h2>Наш стек технологий</h2>
+      <p class="text-muted mb-4">Мы используем проверенные инструменты и библиотеки.</p>
+    </div>
+    <div class="col-12">
+      <ul class="list-inline text-center">
+        <li class="list-inline-item mx-3">
+          <i class="fab fa-python fa-2x text-primary"></i>
+          <p class="mt-2">Python & Flask</p>
+        </li>
+        <li class="list-inline-item mx-3">
+          <i class="fas fa-brain fa-2x text-danger"></i>
+          <p class="mt-2">YOLOv8 (ultralytics)</p>
+        </li>
+        <li class="list-inline-item mx-3">
+          <i class="fas fa-video fa-2x text-success"></i>
+          <p class="mt-2">OpenCV & imageio</p>
+        </li>
+        <li class="list-inline-item mx-3">
+          <i class="fab fa-bootstrap fa-2x text-info"></i>
+          <p class="mt-2">Bootstrap 5.3</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Контакты -->
+  <div class="row mb-5">
+    <div class="col text-center">
+      <h2>Свяжитесь с нами</h2>
+      <p class="text-muted mb-4">Если у вас есть вопросы или предложения, напишите нам:</p>
+      <a href="mailto:team@vga.example.com" class="btn btn-outline-primary me-2">
+        <i class="fas fa-envelope me-1"></i> flyiq440464@gmail.com
+      </a>
+      <a href="https://github.com/your-org/vga" target="_blank" class="btn btn-outline-dark">
+        <i class="fab fa-github me-1"></i> GitHub-репозиторий
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

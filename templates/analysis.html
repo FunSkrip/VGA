@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">Анализ и детекция видео</h2>
+
+  <form id="det-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data"
+        class="row g-4 justify-content-center">
+    <div class="col-md-4">
+      <label for="modelSelect" class="form-label">Выберите модель YOLOv8</label>
+      <select name="model" id="modelSelect" class="form-select" required>
+        {% for val, label in models %}
+          {% if 'n' in val %}
+            <option value="{{ val }}" title="Очень быстро, низкая точность">{{ label }}</option>
+          {% elif 's' in val %}
+            <option value="{{ val }}" title="Быстро, средняя точность">{{ label }}</option>
+          {% elif 'm' in val %}
+            <option value="{{ val }}" title="Средняя скорость и точность">{{ label }}</option>
+          {% elif 'l' in val %}
+            <option value="{{ val }}" title="Медленно, высокая точность">{{ label }}</option>
+          {% elif 'x' in val %}
+            <option value="{{ val }}" title="Очень медленно, максимальная точность">{{ label }}</option>
+          {% else %}
+            <option value="{{ val }}">{{ label }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label for="fileInput" class="form-label">Загрузите файл</label>
+      <input type="file" name="file" id="fileInput" class="form-control"
+             accept="video/*,.gif,image/*" required>
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end">
+      <button type="submit" class="btn btn-success w-100">Запустить детекцию</button>
+    </div>
+  </form>
+
+  <div id="processing" class="text-center mt-4" style="display: none;">
+    <h3>Обрабатывается<span id="dots"></span></h3>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('det-form');
+  const processing = document.getElementById('processing');
+  const dotsEl = document.getElementById('dots');
+  let dots = '';
+
+  form.addEventListener('submit', () => {
+    form.style.display = 'none';
+    processing.style.display = 'block';
+  });
+
+  setInterval(() => {
+    dots = dots.length < 3 ? dots + '.' : '';
+    dotsEl.textContent = dots;
+  }, 500);
+</script>
+{% endblock %}

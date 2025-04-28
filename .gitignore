@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+
+# Flask
+instance/
+*.db
+*.sqlite3
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Model Weights
+runs/
+*.pt
+*.pth
+
+# Personal settings
+*.env
+.env
+
+# Uploaded videos / temporary files (если есть папка загрузок)
+uploads/
+static/uploads/
+temp/
+media/
