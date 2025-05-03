@@ -76,11 +76,14 @@ vga/
 ├── app/
 │   ├── static/
 │   │   ├── css/
-│   │   └── img/
+│   │   ├── img/
+│   │   └── js/
 │   ├── templates/
 │   ├── routes/
 │   ├── models/
-│   └── detector.py
+│   ├── forms/
+│   ├── detector.py
+│   └── extensions.py
 ├── requirements.txt
 ├── config.py
 ├── run.py
