@@ -15,11 +15,11 @@
 
                 <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
                     {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('analysis') }}" class="btn btn-success btn-lg px-4">
+                        <a href="{{ url_for('analysis.analysis_page') }}" class="btn btn-success btn-lg px-4">
                             Начать анализ <i class="fas fa-play-circle ms-2"></i>
                         </a>
                     {% else %}
-                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4">
                             Войти и начать <i class="fas fa-sign-in-alt ms-2"></i>
                         </a>
                     {% endif %}

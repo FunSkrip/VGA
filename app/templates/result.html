@@ -57,11 +57,11 @@
 
       <!-- Кнопки действия -->
       <div class="d-flex justify-content-center gap-3">
-        <a href="{{ url_for('download_file', filename=url) }}"
+        <a href="{{ url_for('files.download_file', filename=url) }}"
            class="btn btn-primary">
           <i class="fas fa-download me-1"></i> Скачать результат
         </a>
-        <a href="{{ url_for('analysis') }}"
+        <a href="{{ url_for('analysis.analysis_page') }}"
            class="btn btn-secondary">
           <i class="fas fa-arrow-left me-1"></i> Назад к детекции
         </a>

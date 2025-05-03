@@ -1,0 +1,9 @@
+Flask
+Flask-Login
+Flask-WTF
+Flask-SQLAlchemy
+WTForms
+Werkzeug
+ultralytics
+opencv-python
+imageio

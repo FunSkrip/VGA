@@ -93,7 +93,7 @@ vga/
 
 | Главная страница | Страница детекции |
 |:----------------:|:-----------------:|
-| ![](static/img/home_screenshot.png) | ![](static/img/detection_screenshot.png) |
+| ![](app/static/img/home_screenshot.png) | ![](app/static/img/detection_screenshot.png) |
 
 ---
 

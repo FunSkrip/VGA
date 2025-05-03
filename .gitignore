@@ -16,7 +16,7 @@ env/
 ENV/
 
 # Flask
-instance/
+app/instance/
 *.db
 *.sqlite3
 
@@ -44,6 +44,8 @@ runs/
 
 # Uploaded videos / temporary files (если есть папка загрузок)
 uploads/
-static/uploads/
+app/static/uploads/
 temp/
 media/
+models/
+processed/

@@ -4,7 +4,7 @@
 <div class="container mt-5">
   <h2 class="mb-4 text-center">Анализ и детекция видео</h2>
 
-  <form id="det-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data"
+  <form id="det-form" action="{{ url_for('analysis.upload') }}" method="post" enctype="multipart/form-data"
         class="row g-4 justify-content-center">
     <div class="col-md-4">
       <label for="modelSelect" class="form-label">Выберите модель YOLOv8</label>

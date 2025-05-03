@@ -15,25 +15,25 @@
             <div class="container-lg">
                 <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
                     <div class="col-md-3 mb-2 mb-md-0">
-                        <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+                        <a href="{{ url_for('main.index') }}" class="d-inline-flex link-body-emphasis text-decoration-none">
                           <img class="header__img" src="{{ url_for('static', filename='img/logo.png') }}" alt="">
                         </a>
                     </div>
 
                     <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                        <li><a href="{{ url_for('index') }}" class="nav-link px-2 {% if request.endpoint == 'index' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Главная страница</a></li>
-                        <li><a href="{{ url_for('analysis') }}" class="nav-link px-2 {% if request.endpoint == 'analysis' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Детекция</a></li>
-                        <li><a href="{{ url_for('about') }}" class="nav-link px-2 {% if request.endpoint == 'about' %}link-primary fw-bold{% else %}link-secondary{% endif %}">О нас</a></li>
+                        <li><a href="{{ url_for('main.index') }}" class="nav-link px-2 {% if request.endpoint == 'main.index' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Главная страница</a></li>
+                        <li><a href="{{ url_for('analysis.analysis_page') }}" class="nav-link px-2 {% if request.endpoint == 'analysis.analysis_page' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Детекция</a></li>
+                        <li><a href="{{ url_for('main.about') }}" class="nav-link px-2 {% if request.endpoint == 'main.about' %}link-primary fw-bold{% else %}link-secondary{% endif %}">О нас</a></li>
                     </ul>
 
                     <div class="col-md-3 text-end">
                         {% if current_user.is_authenticated %}
                             <span class="me-3">Привет, {{ current_user.username }}!</span>
-                            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Выйти</a>
+                            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Выйти</a>
                         {% else %}
                             <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                                <li><a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Войти</a></li>
-                                <li><a href="{{ url_for('register') }}" class="btn btn-primary">Зарегистрироваться</a></li>
+                                <li><a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary me-2">Войти</a></li>
+                                <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary">Зарегистрироваться</a></li>
                             </ul>
                         {% endif %}
                     </div>
