@@ -20,6 +20,9 @@ def create_app():
 
     app.config.from_object(Config)
 
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['YOLO_MODELS_DIR'], exist_ok=True)
+
     db.init_app(app)
     login_manager.init_app(app)
 
@@ -28,10 +31,14 @@ def create_app():
     from app.routes.analysis import analysis
     from app.routes.files import files_bp
 
+    from app.routes.chat_bot import bp
+
     app.register_blueprint(main)
     app.register_blueprint(auth)
     app.register_blueprint(analysis)
     app.register_blueprint(files_bp)
+
+    app.register_blueprint(bp)
 
     with app.app_context():
         db.create_all()
