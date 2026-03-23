@@ -1,9 +1,15 @@
 import google.generativeai as genai
 from flask import Blueprint, request, jsonify
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 bp = Blueprint("chatbot", __name__)
 
-genai.configure(api_key="AIzaSyDx2kMeitIYRl1rckM4z4DONOOpSPr0Zdw")
+api_key = os.getenv("gemini_api_key")
+
+genai.configure(api_key=api_key)
 
 system_prompt = """
 Ты — встроенный чат-помощник приложения Video Segmentation Analytics (VGA).
@@ -36,6 +42,7 @@ system_prompt = """
 """
 
 model = genai.GenerativeModel(model_name="models/gemini-2.5-flash", system_instruction=system_prompt)
+
 
 @bp.route("/chatbot", methods=["POST"])
 def chatbot():

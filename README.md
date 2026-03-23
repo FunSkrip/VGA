@@ -22,10 +22,10 @@
 
 - Backend: **Python**, **Flask**
 - Frontend: **HTML5**, **CSS3**, **Bootstrap 5.3**
-- Нейронные сети: **YOLOv8** / **YOLOv9** (Ultralytics)
+- Нейронные сети: **YOLOv8** (Ultralytics)
 - Хранилище файлов: **Файловая система**
 - Аутентификация: **Flask-Login**
-- Прочее: **Jinja2**, **Flask-WTF**, **WTForms**
+- Прочее: **Flask-WTF**, **WTForms**
 
 ---
 
@@ -107,16 +107,10 @@ vga/
 
 ---
 
-## 📑 Лицензия
-
-Этот проект лицензирован под лицензией MIT.
-
----
 
 ## 🤝 Контакты
 
 Если есть вопросы или предложения:
 - 📧 Почта: flyiq440464@gmail.com
-- 🌐 Сайт: [Video Segmentation Analytics](Пока пусто)
 
 ---

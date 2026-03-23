@@ -1,10 +1,13 @@
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+load_dotenv()
+
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'ef78f8ae12c9585b22cc7273b2bd52b0f3447a8fdd037e69b7dcb04886181a06')
+    SECRET_KEY = os.getenv('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(
         os.path.abspath(os.path.dirname(__file__)),
         'app', 'instance', 'VKR_YOLO.db'

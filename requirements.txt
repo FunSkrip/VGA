@@ -8,3 +8,5 @@ ultralytics~=8.3.116
 opencv-python~=4.11.0.86
 imageio~=2.37.0
 google-generativeai
+
+python-dotenv~=1.2.2
