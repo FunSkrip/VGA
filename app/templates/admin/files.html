@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><h1>Очистка файлов пользователей</h1><a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">Назад</a></div>
+  <p class="text-muted">Показаны только метаданные. Содержимое исходных файлов и результатов администратору не отображается.</p>
+  <div class="table-responsive"><table class="table table-striped align-middle">
+    <thead><tr><th>UID</th><th>Владелец ID</th><th>Исходное имя</th><th>Модель</th><th>Создан</th><th>Действие</th></tr></thead>
+    <tbody>
+      {% for record in records %}<tr>
+        <td><code>{{ record.uid }}</code></td><td>{{ record.owner_id }}</td><td>{{ record.original_name }}</td><td>{{ record.model_name }}</td><td>{{ record.created_at }}</td>
+        <td><form method="post" action="{{ url_for('admin.delete_user_file', uid=record.uid) }}" onsubmit="return confirm('Удалить исходный файл и результат без просмотра содержимого?');">
+          {{ action_forms[record.uid].hidden_tag() }}<button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+        </form></td>
+      </tr>{% else %}<tr><td colspan="6" class="text-center">Файлов нет</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

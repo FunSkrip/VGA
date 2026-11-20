@@ -1,158 +1,473 @@
-from flask import render_template, current_app
-from werkzeug.utils import secure_filename
-import os, uuid, cv2, imageio
+"""YOLO media processing with private storage, ownership metadata and audit events."""
+
+import os
+import subprocess
+import uuid
+
+import cv2
+import imageio
+import imageio_ffmpeg
+import numpy as np
+from flask import current_app, flash, redirect, render_template, url_for
+from flask_login import current_user
 from ultralytics import YOLO
+from werkzeug.utils import secure_filename
 
-# Карта для русских названий
-CLASS_RU = {
-    'person': 'Human',
-    'car':    'Car'
+from app.extensions import db
+from app.forms.admin_forms import ActionForm
+from app.models.media_file import MediaFile
+from app.security import audit_event
+
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "mp4", "avi", "mov"}
+DEFAULT_MODELS = {
+    # YOLOv8 models retained for compatibility with existing VGA settings.
+    "yolov8n.pt",
+    "yolov8s.pt",
+    "yolov8m.pt",
+    "yolov8l.pt",
+    "yolov8x.pt",
+    # YOLO26 models.
+    "yolo26n.pt",
+    "yolo26s.pt",
+    "yolo26m.pt",
+    "yolo26l.pt",
+    "yolo26x.pt",
 }
-
-# Кэш моделей
+CLASS_RU = {"person": "Human", "car": "Car"}
 YOLO_CACHE = {}
+
+# Optional custom tracker configuration. Keep this file at
+# app/trackers/botsort_vga.yaml. It should have with_reid: False for the
+# YOLO26/Ultralytics combination that produced the tensor-index error.
+TRACKER_CONFIG = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "trackers",
+    "botsort_vga.yaml",
+)
 
 
 def load_model(model_filename):
-    path = os.path.join(current_app.config['YOLO_MODELS_DIR'], model_filename)
-    if model_filename not in YOLO_CACHE:
-        YOLO_CACHE[model_filename] = YOLO(path)
-    return YOLO_CACHE[model_filename]
+    """Load a whitelisted model from disk or ask Ultralytics to download it."""
+    if model_filename not in DEFAULT_MODELS:
+        raise ValueError("Недопустимая модель")
 
+    if model_filename in YOLO_CACHE:
+        return YOLO_CACHE[model_filename]
 
-def detect_and_process(request):
-    # 1) Сохранение входного файла
-    file       = request.files['file']
-    model_name = request.form['model']
-    ext        = secure_filename(file.filename).rsplit('.', 1)[-1].lower()
-    uid        = uuid.uuid4().hex
+    model_dir = os.path.abspath(current_app.config["YOLO_MODELS_DIR"])
+    os.makedirs(model_dir, exist_ok=True)
+    model_path = os.path.abspath(os.path.join(model_dir, model_filename))
 
-    upload_dir = current_app.config['UPLOAD_FOLDER']
-    src_path   = os.path.join(upload_dir, f"src_{uid}.{ext}")
-    file.save(src_path)
+    if os.path.commonpath([model_dir, model_path]) != model_dir:
+        raise ValueError("Недопустимый путь к модели")
 
-    # 2) Подготовка пути для результата
-    res_ext  = 'mp4' if ext in ('mp4','avi','mov') else ext
-    res_path = os.path.join(upload_dir, f"res_{uid}.{res_ext}")
-
-    # 3) Загрузка модели
-    yolo = load_model(model_name)
-
-    # Для GIF/видео: хранение уникальных ID
-    id_map     = {}
-    next_label = 1
-
-    # 4) Ветка: статика (JPEG/PNG)
-    if ext in ('jpg','jpeg','png'):
-        img    = cv2.imread(src_path)
-        result = yolo(img)[0]
-        counts = {'person':0, 'car':0}
-
-        for box in result.boxes:
-            cls       = int(box.cls.cpu().numpy())
-            name_en   = yolo.names[cls]                     # 'person' или 'car'
-            name_ru   = CLASS_RU.get(name_en, name_en)      # русская подпись
-            x1,y1,x2,y2 = map(int, box.xyxy[0].cpu().numpy())
-
-            # Рисуем
-            cv2.rectangle(img, (x1,y1),(x2,y2), (0,255,0), 2)
-            cv2.putText(img, name_ru, (x1, y1-10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
-
-            counts[name_en] += 1
-
-        cv2.imwrite(res_path, img)
-        people, cars = counts['person'], counts['car']
-
-    # 5) Ветка: GIF
-    elif ext == 'gif':
-        frames    = imageio.mimread(src_path)
-        processed = []
-        counts    = {'person': set(), 'car': set()}
-
-        for frame in frames:
-            img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            det = yolo.track(img, classes=[0,2], tracker='bytetrack.yaml', verbose=False)[0]
-
-            for box in det.boxes:
-                cls       = int(box.cls.cpu().numpy())
-                name_en   = yolo.names[cls]
-                name_ru   = CLASS_RU.get(name_en, name_en)
-                obj_id    = getattr(box, 'id', None)
-                if obj_id is not None:
-                    obj_id = int(obj_id.cpu().numpy())
-                    if obj_id not in id_map:
-                        id_map[obj_id] = next_label; next_label += 1
-                    label = f"{name_ru} #{id_map[obj_id]}"
-                    counts[name_en].add(obj_id)
-                else:
-                    label = name_ru
-
-                x1,y1,x2,y2 = map(int, box.xyxy[0].cpu().numpy())
-                cv2.rectangle(img, (x1,y1),(x2,y2), (0,255,0), 2)
-                cv2.putText(img, label, (x1, y1-10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
-
-            footer = f"People: {len(counts['person'])}  Cars: {len(counts['car'])}"
-            cv2.putText(img, footer, (10,30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-
-            processed.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-
-        imageio.mimsave(res_path, processed, fps=10)
-        people, cars = len(counts['person']), len(counts['car'])
-
-    # 6) Ветка: видео
+    if os.path.isfile(model_path):
+        model_source = model_path
+        current_app.logger.info("Loading local YOLO model: %s", model_path)
     else:
-        cap    = cv2.VideoCapture(src_path)
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        fps    = cap.get(cv2.CAP_PROP_FPS)
-        w      = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h      = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        out    = cv2.VideoWriter(res_path, fourcc, fps, (w,h))
-        counts = {'person': set(), 'car': set()}
+        # Only explicitly whitelisted official model names are accepted here.
+        # Ultralytics may download these weights if they are not available locally.
+        model_source = model_filename
+        current_app.logger.info(
+            "Local YOLO weights not found; requesting model download: %s",
+            model_filename,
+        )
 
-        while True:
-            ret, frame = cap.read()
-            if not ret: break
+    model = YOLO(model_source)
+    YOLO_CACHE[model_filename] = model
+    return model
 
-            det = yolo.track(frame, classes=[0,2],
-                             tracker='bytetrack.yaml', verbose=False)[0]
 
-            for box in det.boxes:
-                cls       = int(box.cls.cpu().numpy())
-                name_en   = yolo.names[cls]
-                name_ru   = CLASS_RU.get(name_en, name_en)
-                raw_id    = getattr(box, 'id', None)
+def reset_tracker(model):
+    """Reset cached tracker state before processing a different GIF/video."""
+    predictor = getattr(model, "predictor", None)
+    trackers = getattr(predictor, "trackers", None)
 
-                if raw_id is not None:
-                    obj_id = int(raw_id.cpu().numpy())
-                    if obj_id not in id_map:
-                        id_map[obj_id] = next_label; next_label += 1
-                    label = f"{name_ru} #{id_map[obj_id]}"
-                    counts[name_en].add(obj_id)
-                else:
-                    label = name_ru
+    if trackers:
+        for tracker in trackers:
+            reset = getattr(tracker, "reset", None)
+            if callable(reset):
+                reset()
 
-                x1,y1,x2,y2 = map(int, box.xyxy[0].cpu().numpy())
-                cv2.rectangle(frame, (x1,y1),(x2,y2), (0,255,0), 2)
-                cv2.putText(frame, label, (x1, y1-10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
 
-            footer = f"People: {len(counts['person'])}  Cars: {len(counts['car'])}"
-            cv2.putText(frame, footer, (10,30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+def _cleanup(*paths):
+    for path in paths:
+        try:
+            if path and os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            current_app.logger.exception("Could not clean temporary media file")
 
-            out.write(frame)
 
-        cap.release()
-        out.release()
-        people, cars = len(counts['person']), len(counts['car'])
+def _audit_safely(event_name, *, target_type=None, target_id=None, details=None):
+    """Do not let an audit-storage failure mask the media-processing outcome."""
+    try:
+        audit_event(
+            event_name,
+            target_type=target_type,
+            target_id=target_id,
+            details=details or {},
+        )
+    except Exception:
+        current_app.logger.exception("Could not write audit event: %s", event_name)
+        db.session.rollback()
 
-    # 7) Рендерим итоговую страницу
-    return render_template(
-        'result.html',
-        url= os.path.basename(res_path),
-        people=people,
-        cars=cars
-    )
+
+def _convert_mp4_for_browser(raw_video_path, output_path):
+    """Transcode the OpenCV mp4v output to browser-friendly H.264 MP4."""
+    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    timeout_seconds = int(current_app.config.get("FFMPEG_TIMEOUT_SECONDS", 1800))
+
+    command = [
+        ffmpeg_path,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        raw_video_path,
+        "-map",
+        "0:v:0",
+        "-an",  # Current OpenCV VideoWriter pipeline does not preserve audio.
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "23",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        output_path,
+    ]
+
+    try:
+        completed = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        current_app.logger.error(
+            "FFmpeg timed out after %s seconds while transcoding result video",
+            timeout_seconds,
+        )
+        raise RuntimeError("Превышено время конвертации видео") from exc
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or "").strip()
+        current_app.logger.error("FFmpeg video conversion failed: %s", stderr[-4000:])
+        raise RuntimeError("Не удалось подготовить видео для просмотра") from exc
+
+    if not os.path.isfile(output_path) or os.path.getsize(output_path) == 0:
+        raise RuntimeError("FFmpeg не создал итоговый видеофайл")
+
+    return completed
+
+
+def detect_and_process(request, allowed_models=None):
+    """Process one upload and save its result outside Flask's public static folder."""
+    uid = uuid.uuid4().hex
+    upload_dir = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_dir, exist_ok=True)
+    src_path = res_path = raw_video_path = None
+    cap = None
+    out = None
+    record_committed = False
+
+    try:
+        file_storage = request.files.get("file")
+        if file_storage is None or not file_storage.filename:
+            flash("Выберите файл для обработки.", "warning")
+            return redirect(url_for("analysis.analysis_page"))
+
+        safe_original = secure_filename(file_storage.filename)
+        if not safe_original or "." not in safe_original:
+            flash("Не удалось определить имя или формат файла.", "danger")
+            return redirect(url_for("analysis.analysis_page"))
+
+        ext = safe_original.rsplit(".", 1)[-1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            flash("Формат файла не поддерживается.", "danger")
+            return redirect(url_for("analysis.analysis_page"))
+
+        model_name = (request.form.get("model") or "").strip()
+        accepted_models = set(allowed_models or DEFAULT_MODELS)
+        if model_name not in accepted_models or model_name not in DEFAULT_MODELS:
+            flash("Выбрана недопустимая модель YOLO.", "danger")
+            return redirect(url_for("analysis.analysis_page"))
+
+        src_filename = f"src_{uid}.{ext}"
+        result_ext = "mp4" if ext in {"mp4", "avi", "mov"} else ext
+        res_filename = f"res_{uid}.{result_ext}"
+        src_path = os.path.join(upload_dir, src_filename)
+        res_path = os.path.join(upload_dir, res_filename)
+        file_storage.save(src_path)
+
+        size = os.path.getsize(src_path)
+        max_bytes = current_app.config.get("MAX_CONTENT_LENGTH") or (250 * 1024 * 1024)
+        if size <= 0 or size > max_bytes:
+            raise ValueError("Размер файла недопустим")
+
+        _audit_safely(
+            "detection_started",
+            target_type="media",
+            target_id=uid,
+            details={"extension": ext, "model": model_name, "size_bytes": size},
+        )
+
+        yolo = load_model(model_name)
+        id_map = {}
+        next_label = 1
+        counts = {"person": set(), "car": set()}
+
+        if ext in {"jpg", "jpeg", "png"}:
+            # np.fromfile + imdecode handles some Windows path/encoding cases
+            # that cv2.imread does not handle reliably.
+            image_data = np.fromfile(src_path, dtype=np.uint8)
+            img = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+            if img is None or img.size == 0:
+                current_app.logger.error(
+                    "OpenCV could not decode image: path=%s size=%s",
+                    src_path,
+                    os.path.getsize(src_path) if os.path.isfile(src_path) else "missing",
+                )
+                raise ValueError("Не удалось декодировать изображение")
+
+            reset_tracker(yolo)
+            result = yolo(img, classes=[0, 2], verbose=False)[0]
+            image_counts = {"person": 0, "car": 0}
+            for box in result.boxes:
+                cls = int(box.cls.cpu().numpy())
+                name_en = yolo.names[cls]
+                if name_en not in image_counts:
+                    continue
+
+                name_ru = CLASS_RU.get(name_en, name_en)
+                x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
+                cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(
+                    img,
+                    name_ru,
+                    (x1, max(15, y1 - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 255, 0),
+                    2,
+                )
+                image_counts[name_en] += 1
+
+            if not cv2.imwrite(res_path, img):
+                raise RuntimeError("Не удалось сохранить изображение")
+            people, cars = image_counts["person"], image_counts["car"]
+
+        elif ext == "gif":
+            frames = imageio.mimread(src_path)
+            if not frames:
+                raise ValueError("GIF не содержит кадров")
+
+            reset_tracker(yolo)
+            processed = []
+            for frame in frames:
+                img = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                det = yolo.track(
+                    img,
+                    classes=[0, 2],
+                    tracker=TRACKER_CONFIG,
+                    persist=True,
+                    verbose=False,
+                )[0]
+
+                for box in det.boxes:
+                    cls = int(box.cls.cpu().numpy())
+                    name_en = yolo.names[cls]
+                    if name_en not in counts:
+                        continue
+
+                    name_ru = CLASS_RU.get(name_en, name_en)
+                    raw_id = getattr(box, "id", None)
+                    if raw_id is not None:
+                        obj_id = int(raw_id.cpu().numpy())
+                        if obj_id not in id_map:
+                            id_map[obj_id] = next_label
+                            next_label += 1
+                        label = f"{name_ru} #{id_map[obj_id]}"
+                        counts[name_en].add(obj_id)
+                    else:
+                        label = name_ru
+
+                    x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(
+                        img,
+                        label,
+                        (x1, max(15, y1 - 10)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 255, 0),
+                        2,
+                    )
+
+                footer = f"People: {len(counts['person'])}  Cars: {len(counts['car'])}"
+                cv2.putText(
+                    img,
+                    footer,
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2,
+                )
+                processed.append(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+
+            imageio.mimsave(res_path, processed, fps=10)
+            people, cars = len(counts["person"]), len(counts["car"])
+
+        else:
+            cap = cv2.VideoCapture(src_path)
+            if not cap.isOpened():
+                raise ValueError("Не удалось открыть видео")
+
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            if not fps or fps <= 0:
+                fps = 25.0
+
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            if width <= 0 or height <= 0:
+                raise ValueError("Некорректные параметры видео")
+
+            # OpenCV writes an intermediate MPEG-4 Part 2 file. FFmpeg converts
+            # it afterwards to H.264/yuv420p for browser playback.
+            raw_video_path = os.path.join(upload_dir, f"res_{uid}_raw.mp4")
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            out = cv2.VideoWriter(raw_video_path, fourcc, fps, (width, height))
+            if not out.isOpened():
+                raise RuntimeError("Не удалось открыть видеокодек для промежуточного видео")
+
+            reset_tracker(yolo)
+            try:
+                while True:
+                    ok, frame = cap.read()
+                    if not ok:
+                        break
+
+                    det = yolo.track(
+                        frame,
+                        classes=[0, 2],
+                        tracker=TRACKER_CONFIG,
+                        persist=True,
+                        verbose=False,
+                    )[0]
+
+                    for box in det.boxes:
+                        cls = int(box.cls.cpu().numpy())
+                        name_en = yolo.names[cls]
+                        if name_en not in counts:
+                            continue
+
+                        name_ru = CLASS_RU.get(name_en, name_en)
+                        raw_id = getattr(box, "id", None)
+                        if raw_id is not None:
+                            obj_id = int(raw_id.cpu().numpy())
+                            if obj_id not in id_map:
+                                id_map[obj_id] = next_label
+                                next_label += 1
+                            label = f"{name_ru} #{id_map[obj_id]}"
+                            counts[name_en].add(obj_id)
+                        else:
+                            label = name_ru
+
+                        x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(
+                            frame,
+                            label,
+                            (x1, max(15, y1 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 255, 0),
+                            2,
+                        )
+
+                    footer = f"People: {len(counts['person'])}  Cars: {len(counts['car'])}"
+                    cv2.putText(
+                        frame,
+                        footer,
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2,
+                    )
+                    out.write(frame)
+            finally:
+                if cap is not None:
+                    cap.release()
+                if out is not None:
+                    out.release()
+
+            _convert_mp4_for_browser(raw_video_path, res_path)
+            _cleanup(raw_video_path)
+            raw_video_path = None
+            people, cars = len(counts["person"]), len(counts["car"])
+
+        if not os.path.isfile(res_path) or os.path.getsize(res_path) == 0:
+            raise RuntimeError("Результат обработки не был создан")
+
+        record = MediaFile(
+            uid=uid,
+            owner_id=current_user.id,
+            original_name=safe_original[:255],
+            source_filename=src_filename,
+            result_filename=res_filename,
+            model_name=model_name,
+            source_extension=ext,
+            result_extension=result_ext,
+            people_count=int(people),
+            cars_count=int(cars),
+        )
+        db.session.add(record)
+        db.session.commit()
+        record_committed = True
+
+        _audit_safely(
+            "detection_completed",
+            target_type="media",
+            target_id=uid,
+            details={"model": model_name, "people": int(people), "cars": int(cars)},
+        )
+
+        return render_template(
+            "result.html",
+            uid=uid,
+            people=people,
+            cars=cars,
+            result_extension=result_ext,
+            delete_form=ActionForm(prefix=f"user-delete-{uid}"),
+        )
+
+    except Exception as exc:
+        current_app.logger.exception(
+            "VGA media processing failed (%s)", type(exc).__name__
+        )
+        db.session.rollback()
+
+        # If the DB record was already committed, do not delete its result file.
+        if not record_committed:
+            _cleanup(src_path, res_path, raw_video_path)
+
+        _audit_safely(
+            "detection_failed",
+            target_type="media",
+            target_id=uid,
+            details={"error_type": type(exc).__name__},
+        )
+        flash(
+            "Не удалось обработать файл. Проверьте формат и модель, затем попробуйте снова.",
+            "danger",
+        )
+        return redirect(url_for("analysis.analysis_page"))

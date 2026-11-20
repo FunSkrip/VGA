@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Панель администратора</h1>
+  <p class="text-muted">Управление учётными записями и очистка файлов без просмотра их содержимого.</p>
+  <div class="row g-3 mt-2">
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Учётные записи</h5><p class="display-6">{{ users_count }}</p><a class="btn btn-primary" href="{{ url_for('admin.users') }}">Управление пользователями</a></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Заблокировано</h5><p class="display-6">{{ blocked_count }}</p></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Файлы обработки</h5><p class="display-6">{{ media_count }}</p><a class="btn btn-outline-primary" href="{{ url_for('admin.files') }}">Очистка файлов</a></div></div></div>
+  </div>
+  <div class="mt-3"><a href="{{ url_for('audit.logs') }}">Открыть журнал аудита</a></div>
+</div>
+{% endblock %}

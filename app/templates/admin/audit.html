@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Журнал аудита</h1>
+  <p class="text-muted">Режим только для чтения. Содержимое пользовательских файлов, пароли и API-ключи в журнал не записываются.</p>
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-md-4"><label for="action" class="form-label">Событие</label><input id="action" name="action" class="form-control" value="{{ action_filter }}" maxlength="80"></div>
+    <div class="col-md-4"><label for="actor" class="form-label">Пользователь</label><input id="actor" name="actor" class="form-control" value="{{ actor_filter }}" maxlength="80"></div>
+    <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary">Фильтровать</button></div>
+    <div class="col-md-2 d-flex align-items-end"><a href="{{ url_for('audit.logs') }}" class="btn btn-outline-secondary">Сбросить</a></div>
+  </form>
+  <div class="table-responsive"><table class="table table-sm table-striped align-middle">
+    <thead><tr><th>Время UTC</th><th>Пользователь</th><th>Событие</th><th>Объект</th><th>ID объекта</th><th>IP</th><th>Метаданные</th></tr></thead>
+    <tbody>
+      {% for entry in entries %}<tr>
+        <td class="text-nowrap">{{ entry.created_at }}</td><td>{{ entry.actor_username or 'Гость / неизвестен' }}{% if entry.actor_user_id %} (#{{ entry.actor_user_id }}){% endif %}</td>
+        <td><code>{{ entry.action }}</code></td><td>{{ entry.target_type or '—' }}</td><td>{{ entry.target_id or '—' }}</td><td>{{ entry.ip_address or '—' }}</td>
+        <td><code class="small">{{ entry.details_json or '{}' }}</code></td>
+      </tr>{% else %}<tr><td colspan="7" class="text-center">События не найдены</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <p class="small text-muted">Отображаются последние 500 событий. Удаление и редактирование записей через интерфейс не предусмотрено.</p>
+</div>
+{% endblock %}
