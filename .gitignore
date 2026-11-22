@@ -47,5 +47,5 @@ uploads/
 app/static/uploads/
 temp/
 media/
-models/
+/models/
 processed/
