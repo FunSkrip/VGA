@@ -8,7 +8,7 @@ import cv2
 import imageio
 import imageio_ffmpeg
 import numpy as np
-from flask import current_app, flash, redirect, render_template, url_for
+from flask import current_app, flash, redirect, render_template, session, url_for
 from flask_login import current_user
 from ultralytics import YOLO
 from werkzeug.utils import secure_filename
@@ -177,6 +177,9 @@ def detect_and_process(request, allowed_models=None):
     cap = None
     out = None
     record_committed = False
+
+    # Long-running detection must not lose the session that started it.
+    session.modified = True
 
     try:
         file_storage = request.files.get("file")
@@ -441,6 +444,8 @@ def detect_and_process(request, allowed_models=None):
             details={"model": model_name, "people": int(people), "cars": int(cars)},
         )
 
+        # Refresh the cookie on the response that delivers the completed result.
+        session.modified = True
         return render_template(
             "result.html",
             uid=uid,

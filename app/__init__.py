@@ -1,7 +1,10 @@
 import os
 
-from flask import Flask
+from flask import Flask, session
+from flask_login import current_user
+
 from config import Config
+from app.config_validation import validate_runtime_config
 from app.extensions import db, login_manager
 from app.models import AuditLog, MediaFile, User  # noqa: F401 - register SQLAlchemy models
 from app.rbac_migration import upgrade_legacy_schema
@@ -22,6 +25,10 @@ def create_app():
         app.config["MAX_CONTENT_LENGTH"] = 250 * 1024 * 1024
     # Private media must not live under app/static: static routes bypass ownership checks.
     app.config["UPLOAD_FOLDER"] = os.path.join(app.instance_path, "processed")
+
+    # Validate secrets and cookie policy before any extension or request uses them.
+    validate_runtime_config(app)
+
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["YOLO_MODELS_DIR"], exist_ok=True)
 
@@ -30,6 +37,18 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Войдите в систему для доступа к этому разделу."
     login_manager.login_message_category = "warning"
+
+    from app.forms.auth_forms import LogoutForm
+
+    @app.context_processor
+    def inject_logout_form():
+        return {"logout_form": LogoutForm()}
+
+    @app.before_request
+    def enforce_permanent_session():
+        """Upgrade legacy non-permanent sessions to the configured idle lifetime."""
+        if getattr(current_user, "is_authenticated", False) and not session.permanent:
+            session.permanent = True
 
     from app.routes.main import main
     from app.routes.auth import auth

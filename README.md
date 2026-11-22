@@ -108,6 +108,24 @@ vga/
 ---
 
 
+## 🔐 Безопасность и конфигурация
+
+Скопируйте `.env.example` в `.env` и задайте значения:
+
+```bash
+APP_ENV=development
+SECRET_KEY=<случайная строка не короче 32 байт>
+GEMINI_API_KEY=<ключ Gemini, необязательно>
+```
+
+- В `APP_ENV=production` приложение не запустится без `SECRET_KEY`, с коротким ключом или с `SESSION_COOKIE_SECURE=0`.
+- Сессия и CSRF-токен действуют 30 минут неактивности; параметры меняются через `SESSION_LIFETIME_MINUTES` и `CSRF_TIME_LIMIT_MINUTES`.
+- Cookie сессии: `HttpOnly`, `SameSite=Lax`, в production — `Secure`.
+- Выход из системы выполняется только через POST с CSRF-токеном.
+- Для production используйте `wsgi.py` и настоящий WSGI-сервер, а не `python run.py`.
+
+---
+
 ## 🤝 Контакты
 
 Если есть вопросы или предложения:

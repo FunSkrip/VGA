@@ -1,13 +1,47 @@
-from flask import Blueprint, current_app, flash, redirect, render_template, url_for
-from flask_login import current_user, login_user, logout_user, login_required
+from urllib.parse import urljoin, urlsplit
+
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from flask_login import current_user, login_required, login_user, logout_user
 
 from app.extensions import db
-from app.forms.auth_forms import LoginForm, RegistrationForm
-from app.models.user import User, ROLE_USER
+from app.forms.auth_forms import LoginForm, LogoutForm, RegistrationForm
+from app.models.user import ROLE_USER, User
 from app.security import audit_event
 
 
 auth = Blueprint("auth", __name__)
+
+
+def _safe_next_url(target):
+    """Return a same-origin relative URL or None to prevent open redirects."""
+    if not target:
+        return None
+
+    host = urlsplit(request.host_url)
+    candidate = urlsplit(urljoin(request.host_url, target))
+    if candidate.scheme not in {"http", "https"} or candidate.netloc != host.netloc:
+        return None
+
+    path = candidate.path or "/"
+    if path in {"/login", "/register"}:
+        return None
+
+    result = path
+    if candidate.query:
+        result += f"?{candidate.query}"
+    if candidate.fragment:
+        result += f"#{candidate.fragment}"
+    return result
 
 
 @auth.route("/register", methods=["GET", "POST"])
@@ -48,9 +82,15 @@ def login():
         email = form.email.data.strip().lower()
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data) and not user.is_blocked:
+            next_url = _safe_next_url(
+                request.args.get("next") or request.form.get("next")
+            )
+            # Rotate the browser session before granting an authenticated identity.
+            session.clear()
+            session.permanent = True
             login_user(user)
             audit_event("login_success", target_type="user", target_id=user.id, actor=user)
-            return redirect(url_for("main.index"))
+            return redirect(next_url or url_for("main.index"))
 
         audit_event(
             "login_failed",
@@ -64,11 +104,16 @@ def login():
     return render_template("login.html", form=form)
 
 
-@auth.route("/logout", methods=["POST", "GET"])
+@auth.route("/logout", methods=["POST"])
 @login_required
 def logout():
+    form = LogoutForm()
+    if not form.validate_on_submit():
+        abort(400, description="Некорректный CSRF-токен.")
+
     user = current_user._get_current_object()
     audit_event("logout", target_type="user", target_id=user.id, actor=user)
     logout_user()
+    session.clear()
     flash("Вы вышли из системы.", "info")
     return redirect(url_for("main.index"))
