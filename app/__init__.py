@@ -2,12 +2,14 @@ import os
 
 from flask import Flask, session
 from flask_login import current_user
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from app.config_validation import validate_runtime_config
 from app.extensions import db, login_manager
 from app.models import AuditLog, MediaFile, User  # noqa: F401 - register SQLAlchemy models
 from app.rbac_migration import upgrade_legacy_schema
+from app.security_headers import install_security_headers
 
 
 def create_app():
@@ -28,6 +30,18 @@ def create_app():
 
     # Validate secrets and cookie policy before any extension or request uses them.
     validate_runtime_config(app)
+
+    if app.config.get("TRUST_PROXY"):
+        proxy_count = max(1, int(app.config.get("TRUSTED_PROXY_COUNT", 1)))
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=proxy_count,
+            x_proto=proxy_count,
+            x_host=proxy_count,
+            x_port=proxy_count,
+        )
+
+    install_security_headers(app)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["YOLO_MODELS_DIR"], exist_ok=True)

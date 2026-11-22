@@ -10,3 +10,7 @@ imageio~=2.37.0
 google-generativeai
 
 python-dotenv~=1.2.2
+
+# Production WSGI servers
+waitress>=3.0; sys_platform == "win32"
+gunicorn>=23.0; sys_platform != "win32"
