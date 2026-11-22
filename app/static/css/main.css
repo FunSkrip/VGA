@@ -294,3 +294,136 @@ footer {
     cursor: pointer;
 }
 
+/* AUDIT TABLE */
+.audit-count {
+    color: #495057;
+    border: 1px solid #e9ecef;
+    padding: 0.5rem 0.8rem;
+}
+
+.audit-filters,
+.audit-card {
+    border: 0;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.audit-filters .card-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.audit-table {
+    font-size: 0.9rem;
+}
+
+.audit-table thead th {
+    padding: 0.8rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.audit-table tbody td {
+    padding: 0.8rem 0.75rem;
+    border-color: #f0f1f3;
+    vertical-align: middle;
+}
+
+.audit-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+.audit-table td code {
+    color: #6c757d;
+    font-size: 0.78rem;
+}
+
+.audit-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eef4ff;
+    color: #0d6efd;
+    font-weight: 700;
+    flex: 0 0 auto;
+}
+
+.audit-target {
+    display: block;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.audit-target-inline {
+    font-family: var(--bs-font-monospace);
+    overflow-wrap: anywhere;
+}
+
+.audit-meta {
+    min-width: 10rem;
+    max-width: 26rem;
+}
+
+.audit-meta summary {
+    cursor: pointer;
+    color: #0d6efd;
+    font-size: 0.8rem;
+    font-weight: 600;
+    list-style: none;
+}
+
+.audit-meta summary::-webkit-details-marker {
+    display: none;
+}
+
+.audit-meta summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 0.3rem;
+    transition: transform 0.15s ease;
+}
+
+.audit-meta details[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.audit-json {
+    max-height: 13rem;
+    margin: 0.4rem 0 0;
+    padding: 0.6rem 0.7rem;
+    overflow: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+    .audit-table {
+        font-size: 0.84rem;
+    }
+
+    .audit-meta {
+        min-width: 7rem;
+    }
+
+    .audit-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+}
+
