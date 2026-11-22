@@ -61,10 +61,16 @@ from ultralytics import YOLO
 model = YOLO('yolov8n.pt')  # или yolov8s.pt / yolov8m.pt / yolov8l.pt
 ```
 
-5. Запустить приложение:
+5. Применить миграции БД:
 
 ```bash
-flask run
+flask --app run.py db upgrade
+```
+
+6. Запустить приложение:
+
+```bash
+flask --app run.py run
 ```
 
 ---
@@ -107,6 +113,26 @@ vga/
 
 ---
 
+
+## 🗄️ Миграции БД
+
+Схема управляется Alembic/Flask-Migrate:
+
+```bash
+flask --app run.py db upgrade
+flask --app run.py db current
+```
+
+Перед изменением схемы сделайте backup:
+
+```bash
+python tools/backup_db.py
+```
+
+Существующая база уже помечена baseline-ревизией. Для новой базы достаточно
+`flask --app run.py db upgrade`.
+
+---
 
 ## 🔐 Безопасность и конфигурация
 

@@ -6,9 +6,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from app.config_validation import validate_runtime_config
-from app.extensions import db, login_manager
+from app.extensions import db, login_manager, migrate
 from app.models import AuditLog, MediaFile, User  # noqa: F401 - register SQLAlchemy models
-from app.rbac_migration import upgrade_legacy_schema
 from app.security_headers import install_security_headers
 
 
@@ -47,6 +46,7 @@ def create_app():
     os.makedirs(app.config["YOLO_MODELS_DIR"], exist_ok=True)
 
     db.init_app(app)
+    migrate.init_app(app, db, render_as_batch=True)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Войдите в систему для доступа к этому разделу."
@@ -82,8 +82,8 @@ def create_app():
     app.register_blueprint(audit_bp)
     app.register_blueprint(models_admin_bp)
 
-    with app.app_context():
-        db.create_all()
-        upgrade_legacy_schema(db)
+    if app.config.get("AUTO_CREATE_DB"):
+        with app.app_context():
+            db.create_all()
 
     return app

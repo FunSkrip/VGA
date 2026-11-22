@@ -46,9 +46,15 @@ class Config:
         os.getenv("GEMINI_API_KEY") or os.getenv("gemini_api_key") or ""
     ).strip() or None
 
-    DATABASE_PATH = os.path.join(INSTANCE_DIR, "VKR_YOLO.db")
+    DATABASE_PATH = (
+        os.getenv("VGA_DATABASE_PATH")
+        or os.path.join(INSTANCE_DIR, "VKR_YOLO.db")
+    ).strip()
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + DATABASE_PATH
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Schema is managed by Alembic/Flask-Migrate. Enable only for throwaway
+    # development databases.
+    AUTO_CREATE_DB = _env_bool("VGA_AUTO_CREATE_DB", False)
 
     # Backup files and the keyring live outside the project directory.
     BACKUP_DIR = (
