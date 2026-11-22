@@ -120,6 +120,12 @@ footer {
     white-space: nowrap;
 }
 
+.vga-auth-btn {
+    min-width: 96px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
 .vga-account .user-badge {
     display: inline-flex;
     align-items: center;

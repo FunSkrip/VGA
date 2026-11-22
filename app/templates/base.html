@@ -81,8 +81,8 @@
                 <button type="submit" class="btn btn-sm btn-outline-danger">Выйти</button>
               </form>
             {% else %}
-              <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-primary">Войти</a>
-              <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-primary">Регистрация</a>
+              <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary vga-auth-btn">Войти</a>
+              <a href="{{ url_for('auth.register') }}" class="btn btn-primary vga-auth-btn">Регистрация</a>
             {% endif %}
           </div>
         </div>
