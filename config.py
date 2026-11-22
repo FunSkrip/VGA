@@ -54,6 +54,8 @@ class Config:
     # Private media must stay outside app/static. create_app also enforces this.
     UPLOAD_FOLDER = os.path.join(INSTANCE_DIR, "processed")
     YOLO_MODELS_DIR = os.path.join(BASE_DIR, "models")
+    MODEL_MANIFEST_PATH = os.path.join(BASE_DIR, "app", "model_hashes.json")
+    MODEL_REGISTRY_PATH = os.path.join(INSTANCE_DIR, "models_registry.json")
 
     MAX_CONTENT_LENGTH = 250 * 1024 * 1024
 

@@ -15,25 +15,13 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.forms.admin_forms import ActionForm
+from app.model_integrity import ModelIntegrityError
+from app.model_registry import ModelRegistryError, available_models, get_model_entry
 from app.models.media_file import MediaFile
 from app.security import audit_event
 
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "mp4", "avi", "mov"}
-DEFAULT_MODELS = {
-    # YOLOv8 models retained for compatibility with existing VGA settings.
-    "yolov8n.pt",
-    "yolov8s.pt",
-    "yolov8m.pt",
-    "yolov8l.pt",
-    "yolov8x.pt",
-    # YOLO26 models.
-    "yolo26n.pt",
-    "yolo26s.pt",
-    "yolo26m.pt",
-    "yolo26l.pt",
-    "yolo26x.pt",
-}
 CLASS_RU = {"person": "Human", "car": "Car"}
 YOLO_CACHE = {}
 
@@ -48,34 +36,21 @@ TRACKER_CONFIG = os.path.join(
 
 
 def load_model(model_filename):
-    """Load a whitelisted model from disk or ask Ultralytics to download it."""
-    if model_filename not in DEFAULT_MODELS:
-        raise ValueError("Недопустимая модель")
+    """Load an enabled model only after its SHA-256 has been verified.
 
-    if model_filename in YOLO_CACHE:
-        return YOLO_CACHE[model_filename]
+    Ultralytics is intentionally never asked to download weights here: a .pt
+    file is a pickle and must be verified before PyTorch deserializes it.
+    """
+    entry = get_model_entry(model_filename)
+    cache_key = (model_filename, entry["sha256"])
+    cached = YOLO_CACHE.get(model_filename)
+    if cached is not None and cached[0] == cache_key:
+        return cached[1]
 
-    model_dir = os.path.abspath(current_app.config["YOLO_MODELS_DIR"])
-    os.makedirs(model_dir, exist_ok=True)
-    model_path = os.path.abspath(os.path.join(model_dir, model_filename))
-
-    if os.path.commonpath([model_dir, model_path]) != model_dir:
-        raise ValueError("Недопустимый путь к модели")
-
-    if os.path.isfile(model_path):
-        model_source = model_path
-        current_app.logger.info("Loading local YOLO model: %s", model_path)
-    else:
-        # Only explicitly whitelisted official model names are accepted here.
-        # Ultralytics may download these weights if they are not available locally.
-        model_source = model_filename
-        current_app.logger.info(
-            "Local YOLO weights not found; requesting model download: %s",
-            model_filename,
-        )
-
-    model = YOLO(model_source)
-    YOLO_CACHE[model_filename] = model
+    model_path = entry["absolute_path"]
+    current_app.logger.info("Loading verified YOLO model: %s", model_path)
+    model = YOLO(model_path)
+    YOLO_CACHE[model_filename] = (cache_key, model)
     return model
 
 
@@ -198,8 +173,11 @@ def detect_and_process(request, allowed_models=None):
             return redirect(url_for("analysis.analysis_page"))
 
         model_name = (request.form.get("model") or "").strip()
-        accepted_models = set(allowed_models or DEFAULT_MODELS)
-        if model_name not in accepted_models or model_name not in DEFAULT_MODELS:
+        if allowed_models is None:
+            accepted_models = {model["filename"] for model in available_models()}
+        else:
+            accepted_models = set(allowed_models)
+        if model_name not in accepted_models:
             flash("Выбрана недопустимая модель YOLO.", "danger")
             return redirect(url_for("analysis.analysis_page"))
 
@@ -465,14 +443,25 @@ def detect_and_process(request, allowed_models=None):
         if not record_committed:
             _cleanup(src_path, res_path, raw_video_path)
 
+        model_failure = isinstance(exc, (ModelIntegrityError, ModelRegistryError))
         _audit_safely(
             "detection_failed",
             target_type="media",
             target_id=uid,
-            details={"error_type": type(exc).__name__},
+            details={
+                "error_type": type(exc).__name__,
+                "reason": "model_unavailable" if model_failure else "processing",
+            },
         )
-        flash(
-            "Не удалось обработать файл. Проверьте формат и модель, затем попробуйте снова.",
-            "danger",
-        )
+        if model_failure:
+            flash(
+                "Выбранная модель недоступна или не прошла проверку целостности. "
+                "Обратитесь к администратору.",
+                "danger",
+            )
+        else:
+            flash(
+                "Не удалось обработать файл. Проверьте формат и модель, затем попробуйте снова.",
+                "danger",
+            )
         return redirect(url_for("analysis.analysis_page"))

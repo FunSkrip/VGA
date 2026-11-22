@@ -125,6 +125,20 @@ GEMINI_API_KEY=<ключ Gemini, необязательно>
 - В production Flask слушает только `127.0.0.1`, TLS 1.3 и HSTS завершает reverse proxy. Шаблоны nginx и systemd — в `deploy/`.
 - Для production используйте `wsgi.py` и настоящий WSGI-сервер, а не `python run.py`.
 
+### Модели YOLO
+
+- Эталонные SHA-256 и официальные URL лежат в `app/model_hashes.json`.
+- Файл весов проверяется до передачи в Ultralytics/PyTorch; непроверенная модель не загружается.
+- Список доступных моделей хранится в `app/instance/models_registry.json` и не меняет схему SQLite.
+- Проверить локальные веса:
+
+```bash
+python tools/model_manifest.py --check
+python tools/model_manifest.py --hash models/yolov8n.pt
+```
+
+Если файла модели нет, она не появится у пользователя. Автоматическая загрузка весов из интернета отключена.
+
 ---
 
 ## 🤝 Контакты

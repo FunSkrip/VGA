@@ -1,0 +1,32 @@
+{
+  "yolov8n.pt": {
+    "display_name": "YOLOv8 Nano",
+    "sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36",
+    "size": 6549796,
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt"
+  },
+  "yolov8s.pt": {
+    "display_name": "YOLOv8 Small",
+    "sha256": "1f47a78bf100391c2a140b7ac73a1caae18c32779be7d310658112f7ac9aa78a",
+    "size": 22588772,
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8s.pt"
+  },
+  "yolov8m.pt": {
+    "display_name": "YOLOv8 Medium",
+    "sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+    "size": 52136884,
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8m.pt"
+  },
+  "yolov8l.pt": {
+    "display_name": "YOLOv8 Large",
+    "sha256": "64c9115303f6a25575f82200d1b22ec409fa6bd7d08d0313884fc20d919478cd",
+    "size": 87792836,
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8l.pt"
+  },
+  "yolov8x.pt": {
+    "display_name": "YOLOv8 X-Large",
+    "sha256": "3df4ada6b4dad6d657868f2fdf7faecfb34dcfccf3a25c4b82079064718524c8",
+    "size": 136890692,
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8x.pt"
+  }
+}
