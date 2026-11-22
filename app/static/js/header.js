@@ -4,12 +4,19 @@ function initFixedHeader() {
     if (!header) return;
 
     let lastScroll = 0;
-    const headerHeight = header.offsetHeight;
 
-    document.documentElement.style.setProperty(
-        '--header-height',
-        `${headerHeight}px`
-    );
+    function syncHeaderHeight() {
+        document.documentElement.style.setProperty(
+            '--header-height',
+            `${header.offsetHeight}px`
+        );
+    }
+
+    syncHeaderHeight();
+    window.addEventListener('resize', function() {
+        // On mobile the collapsed menu overlays content; keep the closed height.
+        if (window.innerWidth >= 992) syncHeaderHeight();
+    });
 
     window.addEventListener('scroll', function() {
         const currentScroll = window.pageYOffset;
