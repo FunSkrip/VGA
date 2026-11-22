@@ -42,6 +42,7 @@ runs/
 *.vgaenc
 VKR_key_backup/
 backups/
+tools/caddy/
 
 # Personal settings
 *.env

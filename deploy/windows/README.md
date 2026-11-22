@@ -30,7 +30,7 @@ NSSM example:
 
 ```powershell
 nssm install VGA "D:\VKR_YOLO\venv\Scripts\waitress-serve.exe"
-nssm set VGA AppParameters "--listen=127.0.0.1:8000 wsgi:app"
+nssm set VGA AppParameters "--listen=127.0.0.1:8000 --trusted-proxy=127.0.0.1 wsgi:app"
 nssm set VGA AppDirectory "D:\VKR_YOLO"
 nssm set VGA AppEnvironmentExtra APP_ENV=production SESSION_COOKIE_SECURE=1 TRUST_PROXY=1 TRUSTED_PROXY_COUNT=1
 nssm set VGA AppStdout "D:\VKR_YOLO\logs\vga.out.log"
