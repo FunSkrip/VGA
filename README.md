@@ -139,6 +139,20 @@ python tools/model_manifest.py --hash models/yolov8n.pt
 
 Если файла модели нет, она не появится у пользователя. Автоматическая загрузка весов из интернета отключена.
 
+### Резервные копии
+
+База данных резервируется в зашифрованном виде (AES-256-GCM):
+
+```powershell
+.\venv\Scripts\python.exe tools\backup_db.py --init-keyring
+.\venv\Scripts\python.exe tools\backup_db.py
+.\venv\Scripts\python.exe tools\verify_backup.py
+```
+
+Ключ хранится вне проекта: `D:\VKR_key_backup\backup-keyring.json`.
+Копии — в `D:\VKR_YOLO_backups`, по умолчанию хранятся 15 дней.
+Восстановление и расписание Task Scheduler описаны в `deploy/backup.md`.
+
 Администратор управляет моделями на странице `/admin/models`:
 
 - скачать официальную модель из манифеста;

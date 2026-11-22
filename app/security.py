@@ -2,7 +2,7 @@
 from functools import wraps
 import json
 
-from flask import abort, current_app, request
+from flask import abort, current_app, has_request_context, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -37,7 +37,11 @@ def audit_event(action, *, target_type=None, target_id=None, details=None, actor
     """Persist metadata only. Callers must not pass passwords, secrets or media contents."""
     try:
         user = actor
-        if user is None and getattr(current_user, "is_authenticated", False):
+        if (
+            user is None
+            and has_request_context()
+            and getattr(current_user, "is_authenticated", False)
+        ):
             user = current_user
 
         safe_details = details or {}
@@ -52,8 +56,14 @@ def audit_event(action, *, target_type=None, target_id=None, details=None, actor
             action=str(action)[:80],
             target_type=str(target_type)[:80] if target_type is not None else None,
             target_id=str(target_id)[:128] if target_id is not None else None,
-            ip_address=(request.remote_addr or "")[:64] if request else None,
-            user_agent=(request.user_agent.string or "")[:300] if request else None,
+            ip_address=(
+                (request.remote_addr or "")[:64] if has_request_context() else None
+            ),
+            user_agent=(
+                (request.user_agent.string or "")[:300]
+                if has_request_context()
+                else None
+            ),
             details_json=details_json,
         )
         db.session.add(entry)

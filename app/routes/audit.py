@@ -32,6 +32,10 @@ ACTION_LABELS = {
     "chatbot_unavailable": "Бот недоступен",
     "chatbot_api_error": "Ошибка Gemini",
     "chatbot_request_succeeded": "Ответ бота",
+    "backup_created": "Резервная копия",
+    "backup_restored": "Восстановление БД",
+    "backup_failed": "Ошибка backup",
+    "backup_verify_failed": "Ошибка проверки backup",
 }
 
 ACTION_TONES = {
@@ -56,6 +60,10 @@ ACTION_TONES = {
     "chatbot_unavailable": "warning",
     "chatbot_api_error": "danger",
     "chatbot_request_succeeded": "success",
+    "backup_created": "success",
+    "backup_restored": "info",
+    "backup_failed": "danger",
+    "backup_verify_failed": "danger",
 }
 
 
