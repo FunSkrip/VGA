@@ -76,9 +76,9 @@ class Config:
     )
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax").strip() or "Lax"
-    WTF_CSRF_TIME_LIMIT = timedelta(
-        minutes=_env_int("CSRF_TIME_LIMIT_MINUTES", 30)
-    )
+    # Flask-WTF passes this value directly to itsdangerous ``max_age``, which
+    # expects seconds, not timedelta.
+    WTF_CSRF_TIME_LIMIT = _env_int("CSRF_TIME_LIMIT_MINUTES", 30) * 60
 
     PREFERRED_URL_SCHEME = "https" if IS_PRODUCTION else "http"
     TRUSTED_HOSTS = _env_list("TRUSTED_HOSTS") or None

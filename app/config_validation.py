@@ -79,8 +79,18 @@ def _validate_lifetimes(app: Flask) -> None:
         raise ConfigurationError("PERMANENT_SESSION_LIFETIME must be positive")
 
     csrf_lifetime = app.config.get("WTF_CSRF_TIME_LIMIT")
-    if csrf_lifetime is not None and csrf_lifetime.total_seconds() <= 0:
-        raise ConfigurationError("WTF_CSRF_TIME_LIMIT must be positive")
+    if csrf_lifetime is not None:
+        if hasattr(csrf_lifetime, "total_seconds"):
+            csrf_seconds = csrf_lifetime.total_seconds()
+        else:
+            try:
+                csrf_seconds = float(csrf_lifetime)
+            except (TypeError, ValueError) as exc:
+                raise ConfigurationError(
+                    "WTF_CSRF_TIME_LIMIT must be a number of seconds"
+                ) from exc
+        if csrf_seconds <= 0:
+            raise ConfigurationError("WTF_CSRF_TIME_LIMIT must be positive")
 
 
 def _validate_private_storage(app: Flask) -> None:
