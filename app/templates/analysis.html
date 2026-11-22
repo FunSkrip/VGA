@@ -7,7 +7,7 @@
   <form id="det-form" action="{{ url_for('analysis.upload') }}" method="post" enctype="multipart/form-data"
         class="row g-4 justify-content-center">
     {{ upload_form.hidden_tag() }}
-    <div class="col-md-4">
+    <div class="col-lg-4 col-md-5">
       <label for="modelSelect" class="form-label">Выберите модель YOLO</label>
       <select name="model" id="modelSelect" class="form-select" required>
         {% for val, label in models %}
@@ -15,14 +15,14 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-lg-5 col-md-7">
       <label for="fileInput" class="form-label">Загрузите файл</label>
       <input type="file" name="file" id="fileInput" class="form-control"
              accept=".jpg,.jpeg,.png,.gif,.mp4,.avi,.mov" required>
       <small class="text-muted">JPG, PNG, GIF, MP4, AVI, MOV; максимальный размер — 250 МиБ.</small>
     </div>
-    <div class="col-md-4 d-flex align-items-end">
-      <button type="submit" class="btn btn-success w-100">Запустить детекцию</button>
+    <div class="col-12 d-flex justify-content-center pt-2">
+      <button type="submit" class="btn btn-success btn-lg px-5">Запустить детекцию</button>
     </div>
   </form>
   <div id="processing" class="text-center mt-4" style="display: none;">
