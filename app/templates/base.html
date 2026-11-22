@@ -37,7 +37,10 @@
               <span>Привет, {{ current_user.username }}!</span>
               <small class="text-muted">{{ current_user.role_label }}{% if current_user.is_blocked %} · заблокирован{% endif %}</small>
             </div>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Выйти</a>
+            <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+              {{ logout_form.hidden_tag() }}
+              <button type="submit" class="btn btn-outline-danger">Выйти</button>
+            </form>
           {% else %}
             <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary me-2">Войти</a>
             <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Зарегистрироваться</a>

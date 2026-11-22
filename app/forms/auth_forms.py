@@ -16,3 +16,9 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     submit = SubmitField('Войти')
+
+
+class LogoutForm(FlaskForm):
+    """CSRF-only form for POST logout."""
+
+    pass
