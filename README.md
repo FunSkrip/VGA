@@ -150,6 +150,7 @@ GEMINI_API_KEY=<ключ Gemini, необязательно>
 - Выход из системы выполняется только через POST с CSRF-токеном.
 - В production Flask слушает только `127.0.0.1`, TLS 1.3 и HSTS завершает reverse proxy. Шаблоны nginx и systemd — в `deploy/`.
 - Для production используйте `wsgi.py` и настоящий WSGI-сервер, а не `python run.py`.
+- Локальный HTTPS-стенд с Caddy: `deploy/windows/https-demo.md`.
 
 ### Модели YOLO
 
