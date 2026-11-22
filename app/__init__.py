@@ -6,6 +6,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from app.config_validation import validate_runtime_config
+from app.database import register_sqlite_pragmas
 from app.extensions import db, login_manager, migrate
 from app.models import AuditLog, MediaFile, User  # noqa: F401 - register SQLAlchemy models
 from app.security_headers import install_security_headers
@@ -45,6 +46,7 @@ def create_app():
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["YOLO_MODELS_DIR"], exist_ok=True)
 
+    register_sqlite_pragmas()
     db.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
     login_manager.init_app(app)
