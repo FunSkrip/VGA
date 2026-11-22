@@ -71,6 +71,7 @@ def create_app():
     from app.routes.chat_bot import bp as chatbot_bp
     from app.routes.admin import admin_bp
     from app.routes.audit import audit_bp
+    from app.routes.models_admin import models_admin_bp
 
     app.register_blueprint(main)
     app.register_blueprint(auth)
@@ -79,6 +80,7 @@ def create_app():
     app.register_blueprint(chatbot_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(audit_bp)
+    app.register_blueprint(models_admin_bp)
 
     with app.app_context():
         db.create_all()

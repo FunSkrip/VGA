@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1>Модели YOLO</h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">Назад</a>
+  </div>
+  <p class="text-muted">
+    Только официальные модели из манифеста. Удаление запрещено: модель можно выключить,
+    а отсутствующий или повреждённый файл — скачать заново. Пользователи видят только
+    включённые и проверенные модели.
+  </p>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Название</th>
+          <th>Файл</th>
+          <th>Размер</th>
+          <th>SHA-256</th>
+          <th>Статус</th>
+          <th>Доступна</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for record in records %}
+        <tr>
+          <td>{{ record.display_name }}</td>
+          <td><code>{{ record.path }}</code></td>
+          <td>{{ record.size }}</td>
+          <td><code class="small">{{ record.sha256[:16] }}…</code></td>
+          <td>
+            {% if record.status == 'verified' %}
+              <span class="badge text-bg-success">проверена</span>
+            {% elif record.status == 'missing' %}
+              <span class="badge text-bg-secondary">не установлена</span>
+            {% elif record.status == 'hash_failed' %}
+              <span class="badge text-bg-danger">ошибка SHA-256</span>
+            {% else %}
+              <span class="badge text-bg-warning">{{ record.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if record.enabled %}
+              <span class="badge text-bg-success">включена</span>
+            {% else %}
+              <span class="badge text-bg-secondary">выключена</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1 flex-wrap">
+              <form method="post" action="{{ url_for('models_admin.verify', filename=record.filename) }}">
+                {{ verify_forms[record.filename].hidden_tag() }}
+                <button type="submit" class="btn btn-sm btn-outline-primary">Проверить</button>
+              </form>
+
+              {% if record.status in ['missing', 'hash_failed', 'not_in_manifest'] %}
+              <form method="post" action="{{ url_for('models_admin.download', filename=record.filename) }}">
+                {{ download_forms[record.filename].hidden_tag() }}
+                <button type="submit" class="btn btn-sm btn-outline-success">Скачать заново</button>
+              </form>
+              {% endif %}
+
+              <form method="post" action="{{ url_for('models_admin.toggle', filename=record.filename) }}">
+                {{ toggle_forms[record.filename].hidden_tag() }}
+                {% if record.enabled %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">Выключить</button>
+                {% else %}
+                <button type="submit" class="btn btn-sm btn-outline-success">Включить</button>
+                {% endif %}
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="text-center">Модели не найдены</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="small text-muted">
+    Файлы весов: <code>models/</code>. Реестр состояния: <code>app/instance/models_registry.json</code>.
+    Эталонные хеши: <code>app/model_hashes.json</code>.
+  </p>
+</div>
+{% endblock %}

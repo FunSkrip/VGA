@@ -56,6 +56,12 @@ class Config:
     YOLO_MODELS_DIR = os.path.join(BASE_DIR, "models")
     MODEL_MANIFEST_PATH = os.path.join(BASE_DIR, "app", "model_hashes.json")
     MODEL_REGISTRY_PATH = os.path.join(INSTANCE_DIR, "models_registry.json")
+    MODEL_DOWNLOAD_TIMEOUT_SECONDS = _env_int(
+        "MODEL_DOWNLOAD_TIMEOUT_SECONDS", 600
+    )
+    MODEL_DOWNLOAD_MAX_BYTES = _env_int(
+        "MODEL_DOWNLOAD_MAX_BYTES", 512 * 1024 * 1024
+    )
 
     MAX_CONTENT_LENGTH = 250 * 1024 * 1024
 
