@@ -14,6 +14,14 @@ from ultralytics import YOLO
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
+from app.file_validation import (
+    MAX_GIF_FRAMES,
+    UnsupportedMediaError,
+    enforce_gif_limits,
+    enforce_image_pixel_limit,
+    enforce_video_limits,
+    validate_media_signature,
+)
 from app.forms.admin_forms import ActionForm
 from app.model_integrity import ModelIntegrityError
 from app.model_registry import ModelRegistryError, available_models, get_model_entry
@@ -193,6 +201,9 @@ def detect_and_process(request, allowed_models=None):
         if size <= 0 or size > max_bytes:
             raise ValueError("Размер файла недопустим")
 
+        # Extensions are client-controlled; verify the real container first.
+        validate_media_signature(src_path, ext)
+
         _audit_safely(
             "detection_started",
             target_type="media",
@@ -218,6 +229,7 @@ def detect_and_process(request, allowed_models=None):
                 )
                 raise ValueError("Не удалось декодировать изображение")
 
+            enforce_image_pixel_limit(img.shape[1], img.shape[0])
             reset_tracker(yolo)
             result = yolo(img, classes=[0, 2], verbose=False)[0]
             image_counts = {"person": 0, "car": 0}
@@ -246,9 +258,12 @@ def detect_and_process(request, allowed_models=None):
             people, cars = image_counts["person"], image_counts["car"]
 
         elif ext == "gif":
+            enforce_gif_limits(src_path)
             frames = imageio.mimread(src_path)
             if not frames:
                 raise ValueError("GIF не содержит кадров")
+            if len(frames) > MAX_GIF_FRAMES:
+                raise UnsupportedMediaError("GIF содержит слишком много кадров")
 
             reset_tracker(yolo)
             processed = []
@@ -318,8 +333,8 @@ def detect_and_process(request, allowed_models=None):
 
             width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            if width <= 0 or height <= 0:
-                raise ValueError("Некорректные параметры видео")
+            frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+            enforce_video_limits(width, height, fps, frame_count)
 
             # OpenCV writes an intermediate MPEG-4 Part 2 file. FFmpeg converts
             # it afterwards to H.264/yuv420p for browser playback.
@@ -444,16 +459,26 @@ def detect_and_process(request, allowed_models=None):
             _cleanup(src_path, res_path, raw_video_path)
 
         model_failure = isinstance(exc, (ModelIntegrityError, ModelRegistryError))
+        media_failure = isinstance(exc, UnsupportedMediaError)
+        if media_failure:
+            reason = "invalid_media"
+        elif model_failure:
+            reason = "model_unavailable"
+        else:
+            reason = "processing"
         _audit_safely(
             "detection_failed",
             target_type="media",
             target_id=uid,
-            details={
-                "error_type": type(exc).__name__,
-                "reason": "model_unavailable" if model_failure else "processing",
-            },
+            details={"error_type": type(exc).__name__, "reason": reason},
         )
-        if model_failure:
+        if media_failure:
+            flash(
+                "Содержимое файла не соответствует поддерживаемому формату "
+                "или превышает допустимые размеры.",
+                "danger",
+            )
+        elif model_failure:
             flash(
                 "Выбранная модель недоступна или не прошла проверку целостности. "
                 "Обратитесь к администратору.",
