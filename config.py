@@ -46,10 +46,22 @@ class Config:
         os.getenv("GEMINI_API_KEY") or os.getenv("gemini_api_key") or ""
     ).strip() or None
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(
-        INSTANCE_DIR, "VKR_YOLO.db"
-    )
+    DATABASE_PATH = os.path.join(INSTANCE_DIR, "VKR_YOLO.db")
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + DATABASE_PATH
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Backup files and the keyring live outside the project directory.
+    BACKUP_DIR = (
+        os.getenv("VGA_BACKUP_DIR")
+        or os.path.join(os.path.dirname(BASE_DIR), "VKR_YOLO_backups")
+    ).strip()
+    BACKUP_KEYRING = (
+        os.getenv("VGA_BACKUP_KEYRING")
+        or os.path.join(
+            os.path.dirname(BASE_DIR), "VKR_key_backup", "backup-keyring.json"
+        )
+    ).strip()
+    BACKUP_KEEP_DAYS = _env_int("VGA_BACKUP_KEEP_DAYS", 15)
 
     # Private media must stay outside app/static. create_app also enforces this.
     UPLOAD_FOLDER = os.path.join(INSTANCE_DIR, "processed")

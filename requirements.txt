@@ -11,6 +11,9 @@ google-generativeai
 
 python-dotenv~=1.2.2
 
+# Encrypted database backups
+cryptography>=42.0
+
 # Production WSGI servers
 waitress>=3.0; sys_platform == "win32"
 gunicorn>=23.0; sys_platform != "win32"

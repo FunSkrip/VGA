@@ -38,6 +38,11 @@ runs/
 *.pt
 *.pth
 
+# Encrypted backups and local keyrings
+*.vgaenc
+VKR_key_backup/
+backups/
+
 # Personal settings
 *.env
 .env
