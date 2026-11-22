@@ -10,6 +10,7 @@ class AuditLog(db.Model):
     # Snapshot fields intentionally avoid a foreign key so logs survive user deletion.
     actor_user_id = db.Column(db.Integer, nullable=True, index=True)
     actor_username = db.Column(db.String(80), nullable=True)
+    request_id = db.Column(db.String(64), nullable=True, index=True)
     action = db.Column(db.String(80), nullable=False, index=True)
     target_type = db.Column(db.String(80), nullable=True)
     target_id = db.Column(db.String(128), nullable=True, index=True)

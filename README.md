@@ -179,6 +179,17 @@ python tools/model_manifest.py --hash models/yolov8n.pt
 Копии — в `D:\VKR_YOLO_backups`, по умолчанию хранятся 15 дней.
 Восстановление и расписание Task Scheduler описаны в `deploy/backup.md`.
 
+### Аудит
+
+- Каждому запросу присваивается `X-Request-ID`; он попадает в журнал аудита.
+- В журнале можно фильтровать события по `request_id`.
+- Экспорт доступен администратору и аудитору:
+  ```text
+  /audit/export?format=csv
+  /audit/export?format=json
+  ```
+- Экспорт учитывает фильтры `action`, `actor`, `request_id` и ограничен 10 000 событий.
+
 Администратор управляет моделями на странице `/admin/models`:
 
 - скачать официальную модель из манифеста;
