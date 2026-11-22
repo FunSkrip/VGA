@@ -69,6 +69,8 @@ class Config:
     ).strip()
     BACKUP_KEEP_DAYS = _env_int("VGA_BACKUP_KEEP_DAYS", 15)
 
+    AUDIT_EXPORT_LIMIT = _env_int("AUDIT_EXPORT_LIMIT", 10_000)
+
     # Private media must stay outside app/static. create_app also enforces this.
     UPLOAD_FOLDER = os.path.join(INSTANCE_DIR, "processed")
     YOLO_MODELS_DIR = os.path.join(BASE_DIR, "models")

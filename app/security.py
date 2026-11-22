@@ -2,7 +2,7 @@
 from functools import wraps
 import json
 
-from flask import abort, current_app, has_request_context, request
+from flask import abort, current_app, g, has_request_context, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -53,6 +53,11 @@ def audit_event(action, *, target_type=None, target_id=None, details=None, actor
         entry = AuditLog(
             actor_user_id=getattr(user, "id", None),
             actor_username=(getattr(user, "username", None) or None),
+            request_id=(
+                (getattr(g, "request_id", None) or None)
+                if has_request_context()
+                else None
+            ),
             action=str(action)[:80],
             target_type=str(target_type)[:80] if target_type is not None else None,
             target_id=str(target_id)[:128] if target_id is not None else None,

@@ -9,6 +9,7 @@ from app.config_validation import validate_runtime_config
 from app.database import register_sqlite_pragmas
 from app.extensions import db, login_manager, migrate
 from app.models import AuditLog, MediaFile, User  # noqa: F401 - register SQLAlchemy models
+from app.request_context import register_request_context
 from app.security_headers import install_security_headers
 
 
@@ -42,6 +43,7 @@ def create_app():
         )
 
     install_security_headers(app)
+    register_request_context(app)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["YOLO_MODELS_DIR"], exist_ok=True)

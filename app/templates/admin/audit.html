@@ -8,13 +8,23 @@
         Режим только для чтения. Содержимое файлов, пароли и API-ключи в журнал не записываются.
       </p>
     </div>
-    <span class="badge rounded-pill text-bg-light audit-count">{{ entries|length }} событий</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{{ url_for('audit.export', format='csv', action=action_filter, actor=actor_filter, request_id=request_id_filter) }}">
+        Экспорт CSV
+      </a>
+      <a class="btn btn-sm btn-outline-secondary"
+         href="{{ url_for('audit.export', format='json', action=action_filter, actor=actor_filter, request_id=request_id_filter) }}">
+        JSON
+      </a>
+      <span class="badge rounded-pill text-bg-light audit-count">{{ entries|length }} событий</span>
+    </div>
   </div>
 
   <div class="card audit-filters shadow-sm my-4">
     <div class="card-body">
       <form method="get" class="row g-3 align-items-end">
-        <div class="col-lg-4 col-md-5">
+        <div class="col-lg-3 col-md-6">
           <label for="action" class="form-label small text-muted">Событие</label>
           <input id="action" name="action" class="form-control" list="audit-actions"
                  value="{{ action_filter }}" maxlength="80"
@@ -23,12 +33,18 @@
             {% for option in action_options %}<option value="{{ option }}">{% endfor %}
           </datalist>
         </div>
-        <div class="col-lg-3 col-md-4">
+        <div class="col-lg-3 col-md-6">
+          <label for="request_id" class="form-label small text-muted">Request ID</label>
+          <input id="request_id" name="request_id" class="form-control"
+                 value="{{ request_id_filter }}" maxlength="64"
+                 placeholder="X-Request-ID">
+        </div>
+        <div class="col-lg-3 col-md-6">
           <label for="actor" class="form-label small text-muted">Пользователь</label>
           <input id="actor" name="actor" class="form-control" value="{{ actor_filter }}"
                  maxlength="80" placeholder="Имя пользователя">
         </div>
-        <div class="col-lg-5 col-md-3 d-flex gap-2">
+        <div class="col-lg-3 col-md-6 d-flex gap-2">
           <button type="submit" class="btn btn-primary">Фильтровать</button>
           <a href="{{ url_for('audit.logs') }}" class="btn btn-outline-secondary">Сбросить</a>
         </div>
@@ -44,6 +60,7 @@
             <th class="ps-3">Время</th>
             <th>Пользователь</th>
             <th>Событие</th>
+            <th class="d-none d-xl-table-cell">Request ID</th>
             <th class="d-none d-lg-table-cell">Объект</th>
             <th class="d-none d-md-table-cell">IP</th>
             <th>Метаданные</th>
@@ -69,9 +86,19 @@
             <td>
               <span class="badge rounded-pill text-bg-{{ entry.action_tone }}">{{ entry.action_label }}</span>
               <div class="small text-muted mt-1"><code>{{ entry.action }}</code></div>
+              <div class="small text-muted mt-1 d-xl-none">
+                {% if entry.request_id %}req: <code>{{ entry.request_id[:12] }}…</code>{% endif %}
+              </div>
               <div class="small text-muted mt-1 d-lg-none">
                 {{ entry.target_type or '—' }}{% if entry.target_id %} · <span class="audit-target-inline">{{ entry.target_id }}</span>{% endif %}
               </div>
+            </td>
+            <td class="d-none d-xl-table-cell">
+              {% if entry.request_id %}
+              <code class="small audit-target" title="{{ entry.request_id }}">{{ entry.request_id }}</code>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
             </td>
             <td class="d-none d-lg-table-cell">
               <div class="d-flex flex-column gap-1">
@@ -95,7 +122,7 @@
           </tr>
         {% else %}
           <tr>
-            <td colspan="6" class="text-center py-5 text-muted">События не найдены</td>
+            <td colspan="7" class="text-center py-5 text-muted">События не найдены</td>
           </tr>
         {% endfor %}
         </tbody>
@@ -104,7 +131,8 @@
   </div>
 
   <p class="small text-muted mt-3 mb-0">
-    Показаны последние 500 событий. Удаление и редактирование записей через интерфейс не предусмотрено.
+    Показаны последние 500 событий. Экспорт выгружает до 10 000 событий с учётом фильтров.
+    Удаление и редактирование записей через интерфейс не предусмотрено.
   </p>
 </div>
 {% endblock %}
