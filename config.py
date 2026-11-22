@@ -74,4 +74,13 @@ class Config:
 
     PREFERRED_URL_SCHEME = "https" if IS_PRODUCTION else "http"
     TRUSTED_HOSTS = _env_list("TRUSTED_HOSTS") or None
+
+    # Set TRUST_PROXY=1 only when Flask is reachable exclusively through the
+    # reverse proxy (normally 127.0.0.1). Otherwise clients could spoof
+    # X-Forwarded-For and X-Forwarded-Proto.
+    TRUST_PROXY = _env_bool("TRUST_PROXY", IS_PRODUCTION)
+    TRUSTED_PROXY_COUNT = _env_int("TRUSTED_PROXY_COUNT", 1)
+    HSTS_MAX_AGE = _env_int("HSTS_MAX_AGE", 31536000, minimum=0)
+    HSTS_INCLUDE_SUBDOMAINS = _env_bool("HSTS_INCLUDE_SUBDOMAINS", False)
+
     LOG_LEVEL = (os.getenv("LOG_LEVEL") or "INFO").strip().upper()

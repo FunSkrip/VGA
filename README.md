@@ -122,6 +122,7 @@ GEMINI_API_KEY=<ключ Gemini, необязательно>
 - Сессия и CSRF-токен действуют 30 минут неактивности; параметры меняются через `SESSION_LIFETIME_MINUTES` и `CSRF_TIME_LIMIT_MINUTES`.
 - Cookie сессии: `HttpOnly`, `SameSite=Lax`, в production — `Secure`.
 - Выход из системы выполняется только через POST с CSRF-токеном.
+- В production Flask слушает только `127.0.0.1`, TLS 1.3 и HSTS завершает reverse proxy. Шаблоны nginx и systemd — в `deploy/`.
 - Для production используйте `wsgi.py` и настоящий WSGI-сервер, а не `python run.py`.
 
 ---
