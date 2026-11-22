@@ -8,6 +8,10 @@
     <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Заблокировано</h5><p class="display-6">{{ blocked_count }}</p></div></div></div>
     <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Файлы обработки</h5><p class="display-6">{{ media_count }}</p><a class="btn btn-outline-primary" href="{{ url_for('admin.files') }}">Очистка файлов</a></div></div></div>
   </div>
-  <div class="mt-3"><a href="{{ url_for('audit.logs') }}">Открыть журнал аудита</a></div>
+  <div class="mt-3">
+    <a href="{{ url_for('models_admin.index') }}">Управление моделями YOLO</a>
+    <span class="text-muted mx-2">·</span>
+    <a href="{{ url_for('audit.logs') }}">Открыть журнал аудита</a>
+  </div>
 </div>
 {% endblock %}

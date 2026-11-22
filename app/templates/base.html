@@ -26,6 +26,7 @@
           <li><a href="{{ url_for('main.about') }}" class="nav-link px-2 {% if request.endpoint == 'main.about' %}link-primary fw-bold{% else %}link-secondary{% endif %}">О системе</a></li>
           {% if current_user.is_authenticated and current_user.role == 'admin' %}
           <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link px-2 {% if request.endpoint and request.endpoint.startswith('admin.') %}link-primary fw-bold{% else %}link-secondary{% endif %}">Администрирование</a></li>
+          <li><a href="{{ url_for('models_admin.index') }}" class="nav-link px-2 {% if request.endpoint and request.endpoint.startswith('models_admin.') %}link-primary fw-bold{% else %}link-secondary{% endif %}">Модели</a></li>
           {% endif %}
           {% if current_user.is_authenticated and current_user.role in ['admin', 'auditor'] %}
           <li><a href="{{ url_for('audit.logs') }}" class="nav-link px-2 {% if request.endpoint == 'audit.logs' %}link-primary fw-bold{% else %}link-secondary{% endif %}">Журнал аудита</a></li>

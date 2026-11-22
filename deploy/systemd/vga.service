@@ -19,7 +19,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/vga/app/instance
+# The models directory is writable only for admin-triggered official downloads;
+# installed weight files are marked read-only by the application.
+ReadWritePaths=/opt/vga/app/instance /opt/vga/models
 
 [Install]
 WantedBy=multi-user.target
