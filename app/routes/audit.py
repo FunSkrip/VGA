@@ -40,6 +40,14 @@ ACTION_LABELS = {
     "backup_failed": "Ошибка backup",
     "backup_verify_failed": "Ошибка проверки backup",
     "audit_exported": "Экспорт аудита",
+    "upload_rejected": "Загрузка отклонена",
+    "model_verified": "Модель проверена",
+    "model_verify_failed": "Ошибка проверки модели",
+    "model_enabled": "Модель включена",
+    "model_disabled": "Модель выключена",
+    "model_toggle_failed": "Ошибка переключения модели",
+    "model_downloaded": "Модель скачана",
+    "model_download_failed": "Ошибка скачивания модели",
 }
 
 ACTION_TONES = {
@@ -69,6 +77,14 @@ ACTION_TONES = {
     "backup_failed": "danger",
     "backup_verify_failed": "danger",
     "audit_exported": "info",
+    "upload_rejected": "danger",
+    "model_verified": "success",
+    "model_verify_failed": "danger",
+    "model_enabled": "success",
+    "model_disabled": "secondary",
+    "model_toggle_failed": "danger",
+    "model_downloaded": "primary",
+    "model_download_failed": "danger",
 }
 
 
