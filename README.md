@@ -190,6 +190,7 @@ python tools/model_manifest.py --hash models/yolov8n.pt
   /audit/export?format=json
   ```
 - Экспорт учитывает фильтры `action`, `actor`, `request_id` и ограничен 10 000 событий.
+- Фиксируются действия с моделями YOLO (`model_verified`, `model_enabled`, `model_downloaded` и ошибки), длительность детекции и отклонённые загрузки (`upload_rejected`).
 
 Администратор управляет моделями на странице `/admin/models`:
 

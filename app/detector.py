@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import time
 import uuid
 
 import cv2
@@ -160,6 +161,10 @@ def detect_and_process(request, allowed_models=None):
     cap = None
     out = None
     record_committed = False
+    detection_started = False
+    started_at = time.monotonic()
+    ext = None
+    size = None
 
     # Long-running detection must not lose the session that started it.
     session.modified = True
@@ -167,16 +172,34 @@ def detect_and_process(request, allowed_models=None):
     try:
         file_storage = request.files.get("file")
         if file_storage is None or not file_storage.filename:
+            _audit_safely(
+                "upload_rejected",
+                target_type="media",
+                target_id=uid,
+                details={"reason": "missing_file"},
+            )
             flash("Выберите файл для обработки.", "warning")
             return redirect(url_for("analysis.analysis_page"))
 
         safe_original = secure_filename(file_storage.filename)
         if not safe_original or "." not in safe_original:
+            _audit_safely(
+                "upload_rejected",
+                target_type="media",
+                target_id=uid,
+                details={"reason": "invalid_filename"},
+            )
             flash("Не удалось определить имя или формат файла.", "danger")
             return redirect(url_for("analysis.analysis_page"))
 
         ext = safe_original.rsplit(".", 1)[-1].lower()
         if ext not in ALLOWED_EXTENSIONS:
+            _audit_safely(
+                "upload_rejected",
+                target_type="media",
+                target_id=uid,
+                details={"reason": "unsupported_extension", "extension": ext},
+            )
             flash("Формат файла не поддерживается.", "danger")
             return redirect(url_for("analysis.analysis_page"))
 
@@ -186,6 +209,12 @@ def detect_and_process(request, allowed_models=None):
         else:
             accepted_models = set(allowed_models)
         if model_name not in accepted_models:
+            _audit_safely(
+                "upload_rejected",
+                target_type="media",
+                target_id=uid,
+                details={"reason": "invalid_model", "model": model_name[:80]},
+            )
             flash("Выбрана недопустимая модель YOLO.", "danger")
             return redirect(url_for("analysis.analysis_page"))
 
@@ -210,6 +239,7 @@ def detect_and_process(request, allowed_models=None):
             target_id=uid,
             details={"extension": ext, "model": model_name, "size_bytes": size},
         )
+        detection_started = True
 
         yolo = load_model(model_name)
         id_map = {}
@@ -434,7 +464,12 @@ def detect_and_process(request, allowed_models=None):
             "detection_completed",
             target_type="media",
             target_id=uid,
-            details={"model": model_name, "people": int(people), "cars": int(cars)},
+            details={
+                "model": model_name,
+                "people": int(people),
+                "cars": int(cars),
+                "duration_seconds": round(time.monotonic() - started_at, 3),
+            },
         )
 
         # Refresh the cookie on the response that delivers the completed result.
@@ -460,18 +495,41 @@ def detect_and_process(request, allowed_models=None):
 
         model_failure = isinstance(exc, (ModelIntegrityError, ModelRegistryError))
         media_failure = isinstance(exc, UnsupportedMediaError)
-        if media_failure:
-            reason = "invalid_media"
-        elif model_failure:
-            reason = "model_unavailable"
+        duration_seconds = round(time.monotonic() - started_at, 3)
+        if detection_started:
+            if model_failure:
+                reason = "model_unavailable"
+            else:
+                reason = "processing"
+            _audit_safely(
+                "detection_failed",
+                target_type="media",
+                target_id=uid,
+                details={
+                    "error_type": type(exc).__name__,
+                    "reason": reason,
+                    "duration_seconds": duration_seconds,
+                },
+            )
         else:
-            reason = "processing"
-        _audit_safely(
-            "detection_failed",
-            target_type="media",
-            target_id=uid,
-            details={"error_type": type(exc).__name__, "reason": reason},
-        )
+            if media_failure:
+                reason = "invalid_media"
+            elif isinstance(exc, ValueError) and str(exc) == "Размер файла недопустим":
+                reason = "invalid_size"
+            else:
+                reason = "validation_error"
+            _audit_safely(
+                "upload_rejected",
+                target_type="media",
+                target_id=uid,
+                details={
+                    "error_type": type(exc).__name__,
+                    "reason": reason,
+                    "extension": ext,
+                    "size_bytes": size,
+                    "duration_seconds": duration_seconds,
+                },
+            )
         if media_failure:
             flash(
                 "Содержимое файла не соответствует поддерживаемому формату "
